@@ -148,7 +148,7 @@
 
                     <!-- Eligible Diagnostic Payment Field -->
                     <div class="mt-4">
-                        <label for="eligibleDiagnosticPayment_${index}" class="block text-sm font-medium text-gray-300 mb-1">Eligible Diagnostic Payment (90% of Diagnostic Total)</label>
+                        <label for="eligibleDiagnosticPayment_${index}" class="block text-sm font-medium text-gray-300 mb-1">Rebate-Covered Diagnostic Pay (90%)</label>
                         <input type="text" id="eligibleDiagnosticPayment_${index}" name="eligibleDiagnosticPayment_${index}" value="0.00" readonly
                                class="mt-1 block w-full px-4 py-2 border border-gray-600 rounded-lg bg-gray-700 text-gray-400 cursor-not-allowed shadow-sm sm:text-sm">
                     </div>
@@ -160,6 +160,13 @@
                                class="mt-1 block w-full px-4 py-2 border border-gray-600 rounded-lg bg-gray-700 text-gray-400 cursor-not-allowed shadow-sm sm:text-sm">
                     </div>
 
+                    <!-- Customer-Paid Diagnostic (10%) Field -->
+                    <div class="mt-4">
+                        <label for="customerDiagnosticPay_${index}" class="block text-sm font-medium text-gray-300 mb-1">Customer-Paid Diagnostic (10%)</label>
+                        <input type="text" id="customerDiagnosticPay_${index}" name="customerDiagnosticPay_${index}" value="0.00" readonly
+                               class="mt-1 block w-full px-4 py-2 border border-gray-600 rounded-lg bg-gray-700 text-gray-400 cursor-not-allowed shadow-sm sm:text-sm">
+                    </div>
+
                     <!-- Customer Pay (10% of Job Total, capped at $150) Field -->
                     <div class="mt-4">
                         <label for="customerPayPercentage_${index}" class="block text-sm font-medium text-gray-300 mb-1">Customer Pay (10% of Job Total, Capped at ${(OVERAGE_THRESHOLD * 0.10).toFixed(2)})</label>
@@ -167,20 +174,20 @@
                                class="mt-1 block w-full px-4 py-2 border border-gray-600 rounded-lg bg-gray-700 text-gray-400 cursor-not-allowed shadow-sm sm:text-sm">
                     </div>
 
-                    <!-- Total Rebate Payment Field -->
-                    <div class="mt-4">
-                        <label for="totalRebatePayment_${index}" class="block text-sm font-medium text-gray-300 mb-1">Total Rebate Payment (Eligible Rebate + Eligible Diagnostic)</label>
-                        <input type="text" id="totalRebatePayment_${index}" name="totalRebatePayment_${index}" value="0.00" readonly
-                               class="mt-1 block w-full px-4 py-2 border border-gray-600 rounded-lg bg-gray-700 text-purple-400 font-bold cursor-not-allowed shadow-sm sm:text-sm">
-                    </div>
-
                     <!-- Overage Field -->
                     <div class="mt-4">
-                        <label for="overage_${index}" class="block text-sm font-medium text-gray-300 mb-1">Additional Customer Payment (RO Total - Capped 10% - Total Rebate)</label>
+                        <label for="overage_${index}" class="block text-sm font-medium text-gray-300 mb-1">Remaining Balance (Overage)</label>
                         <input type="text" id="overage_${index}" name="overage_${index}" value="0.00" readonly
                                class="mt-1 block w-full px-4 py-2 border border-gray-600 rounded-lg bg-gray-700 text-gray-400 cursor-not-allowed shadow-sm sm:text-sm">
                     </div>
 
+                    <!-- Total Rebate Payment Field -->
+                    <div class="mt-4">
+                        <label for="totalRebatePayment_${index}" class="block text-sm font-medium text-gray-300 mb-1">Total Rebate Payment (Rebate-Covered Diagnostic + Eligible Rebate)</label>
+                        <input type="text" id="totalRebatePayment_${index}" name="totalRebatePayment_${index}" value="0.00" readonly
+                               class="mt-1 block w-full px-4 py-2 border border-gray-600 rounded-lg bg-gray-700 text-purple-400 font-bold cursor-not-allowed shadow-sm sm:text-sm">
+                    </div>
+                    
                     <!-- Total Customer Payment Field -->
                     <div class="mt-4">
                         <label for="totalCustomerPayment_${index}" class="block text-sm font-medium text-gray-300 mb-1">Total Customer Payment ($)</label>
@@ -246,18 +253,21 @@
 
                 // Calculate values
                 const roTotal = diagnosticTotal + jobTotal;
-                const eligibleDiagnosticPayment = diagnosticTotal * 0.90; // UPDATED to 90%
+                const eligibleDiagnosticPayment = diagnosticTotal * 0.90;
+                const customerDiagnosticPay = diagnosticTotal * 0.10; // Explicit 10% customer diagnostic pay
                 const eligibleRebatePayment = Math.min(jobTotal, REBATE_MAX_CAP);
                 const customerPayPercentage = Math.min(jobTotal * 0.10, OVERAGE_THRESHOLD * 0.10);
                 const totalRebatePayment = eligibleRebatePayment + eligibleDiagnosticPayment;
-                const additionalCustomerPayment = roTotal - customerPayPercentage - totalRebatePayment;
-                const overage = Math.max(0, additionalCustomerPayment);
-                const totalCustomerPayment = customerPayPercentage + overage;
+                
+                // New, more explicit calculation for overage and total customer payment
+                const overage = Math.max(0, roTotal - totalRebatePayment - customerPayPercentage);
+                const totalCustomerPayment = customerDiagnosticPay + customerPayPercentage + overage;
 
                 // Update display fields for the current car entry
                 carElement.querySelector(`#roTotal_${index}`).value = roTotal.toFixed(2);
                 carElement.querySelector(`#eligibleDiagnosticPayment_${index}`).value = eligibleDiagnosticPayment.toFixed(2);
                 carElement.querySelector(`#eligibleRebatePayment_${index}`).value = eligibleRebatePayment.toFixed(2);
+                carElement.querySelector(`#customerDiagnosticPay_${index}`).value = customerDiagnosticPay.toFixed(2);
                 carElement.querySelector(`#customerPayPercentage_${index}`).value = customerPayPercentage.toFixed(2);
                 carElement.querySelector(`#totalRebatePayment_${index}`).value = totalRebatePayment.toFixed(2);
                 carElement.querySelector(`#overage_${index}`).value = overage.toFixed(2);
@@ -349,4 +359,3 @@
     </script>
 </body>
 </html>
-
