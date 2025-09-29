@@ -146,9 +146,9 @@
 
                     <hr class="border-gray-700 my-4">
 
-                    <!-- Eligible Diagnostic Payment Field -->
+                    <!-- Eligible Diagnostic Payment Field - NOW 100% -->
                     <div class="mt-4">
-                        <label for="eligibleDiagnosticPayment_${index}" class="block text-sm font-medium text-gray-300 mb-1">Rebate-Covered Diagnostic Pay (90%)</label>
+                        <label for="eligibleDiagnosticPayment_${index}" class="block text-sm font-medium text-gray-300 mb-1">Rebate-Covered Diagnostic Pay (100%)</label>
                         <input type="text" id="eligibleDiagnosticPayment_${index}" name="eligibleDiagnosticPayment_${index}" value="0.00" readonly
                                class="mt-1 block w-full px-4 py-2 border border-gray-600 rounded-lg bg-gray-700 text-gray-400 cursor-not-allowed shadow-sm sm:text-sm">
                     </div>
@@ -157,13 +157,6 @@
                     <div class="mt-4">
                         <label for="eligibleRebatePayment_${index}" class="block text-sm font-medium text-gray-300 mb-1">Eligible Rebate Payment (from Job Total, Max $${REBATE_MAX_CAP.toFixed(2)})</label>
                         <input type="text" id="eligibleRebatePayment_${index}" name="eligibleRebatePayment_${index}" value="0.00" readonly
-                               class="mt-1 block w-full px-4 py-2 border border-gray-600 rounded-lg bg-gray-700 text-gray-400 cursor-not-allowed shadow-sm sm:text-sm">
-                    </div>
-
-                    <!-- Customer-Paid Diagnostic (10%) Field -->
-                    <div class="mt-4">
-                        <label for="customerDiagnosticPay_${index}" class="block text-sm font-medium text-gray-300 mb-1">Customer-Paid Diagnostic (10%)</label>
-                        <input type="text" id="customerDiagnosticPay_${index}" name="customerDiagnosticPay_${index}" value="0.00" readonly
                                class="mt-1 block w-full px-4 py-2 border border-gray-600 rounded-lg bg-gray-700 text-gray-400 cursor-not-allowed shadow-sm sm:text-sm">
                     </div>
 
@@ -251,23 +244,35 @@
                 const diagnosticTotal = parseFloat(carElement.querySelector(`#diagnosticTotal_${index}`).value) || 0;
                 const jobTotal = parseFloat(carElement.querySelector(`#jobTotal_${index}`).value) || 0;
 
-                // Calculate values
+                // --- NEW CALCULATION LOGIC ---
                 const roTotal = diagnosticTotal + jobTotal;
-                const eligibleDiagnosticPayment = diagnosticTotal * 0.90;
-                const customerDiagnosticPay = diagnosticTotal * 0.10; // Explicit 10% customer diagnostic pay
+                
+                // 1. Rebate now covers 100% of the diagnostic total
+                const eligibleDiagnosticPayment = diagnosticTotal; 
+                
+                // 2. Customer pays 0% of diagnostic (as requested)
+                // const customerDiagnosticPay = 0; 
+                
+                // Customer pay based on job total (capped at $150)
                 const eligibleRebatePayment = Math.min(jobTotal, REBATE_MAX_CAP);
                 const customerPayPercentage = Math.min(jobTotal * 0.10, OVERAGE_THRESHOLD * 0.10);
+                
+                // Total Mazda payment
                 const totalRebatePayment = eligibleRebatePayment + eligibleDiagnosticPayment;
                 
-                // New, more explicit calculation for overage and total customer payment
+                // Overage is the RO Total minus ALL payments (Mazda's full rebate payment + customer's 10% job pay)
                 const overage = Math.max(0, roTotal - totalRebatePayment - customerPayPercentage);
-                const totalCustomerPayment = customerDiagnosticPay + customerPayPercentage + overage;
+                
+                // Total Customer Payment = 10% Job Pay + Overage (Diagnostic pay is 0)
+                const totalCustomerPayment = customerPayPercentage + overage;
+                // --- END NEW CALCULATION LOGIC ---
+
 
                 // Update display fields for the current car entry
                 carElement.querySelector(`#roTotal_${index}`).value = roTotal.toFixed(2);
                 carElement.querySelector(`#eligibleDiagnosticPayment_${index}`).value = eligibleDiagnosticPayment.toFixed(2);
                 carElement.querySelector(`#eligibleRebatePayment_${index}`).value = eligibleRebatePayment.toFixed(2);
-                carElement.querySelector(`#customerDiagnosticPay_${index}`).value = customerDiagnosticPay.toFixed(2);
+                // Note: customerDiagnosticPay field was removed from HTML
                 carElement.querySelector(`#customerPayPercentage_${index}`).value = customerPayPercentage.toFixed(2);
                 carElement.querySelector(`#totalRebatePayment_${index}`).value = totalRebatePayment.toFixed(2);
                 carElement.querySelector(`#overage_${index}`).value = overage.toFixed(2);
